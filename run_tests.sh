@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Base command to run the Java program
-JAVA_CMD="java -cp classes:lib/pddl4j-4.0.0.jar fr.uga.pddl4j.examples.mcts.MonteCarloPlanner"
+# Base command to run the Java program with Windows-style classpath separator
+JAVA_CMD="java -cp classes;lib/pddl4j-4.0.0.jar fr.uga.pddl4j.examples.mcts.MonteCarloPlanner"
 
 # Root directory containing the test folders
 TEST_DIR="src/test"
