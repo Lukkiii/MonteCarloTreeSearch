@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.Random;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.tools.picocli.CommandLine.Command;
+
 import picocli.CommandLine;
 
 /**
@@ -25,48 +27,63 @@ import picocli.CommandLine;
  * @author
  * @version
  */
-@CommandLine.Command(name = "MCTS", version = "MCTS 1.0", description = "Solves a specified planning problem using MCTS with pure random walks.", sortOptions = false, mixinStandardHelpOptions = true, headerHeading = "Usage:%n", synopsisHeading = "%n", descriptionHeading = "%nDescription:%n%n", parameterListHeading = "%nParameters:%n", optionListHeading = "%nOptions:%n")
-
+@CommandLine.Command(
+    name = "MCTS", 
+    version = "MCTS 1.0", 
+    description = "Solves a specified planning problem using MCTS with pure random walks.", 
+    sortOptions = false, mixinStandardHelpOptions = true, headerHeading = "Usage:%n", 
+    synopsisHeading = "%n", descriptionHeading = "%nDescription:%n%n", 
+    parameterListHeading = "%nParameters:%n", 
+    optionListHeading = "%nOptions:%n")
 public class MonteCarloPlanner extends AbstractPlanner {
 
     private static final Logger LOGGER = LogManager.getLogger(MonteCarloPlanner.class.getName());
 
-    @CommandLine.Option(names = {"-i", "--iterations"}, description = "Maximum number of iterations")
-    private int maxIterations = 1000;
+    // Parameters for Pure RW MCTS
+    // private static final double ALPHA = 0.9;
 
-    @CommandLine.Option(names = {"-d", "--depth"}, description = "Maximum depth for playouts")
-    private int maxDepth = 300;
+    @CommandLine.Option(names = {"-n", "--num-walks"}, description = "Number of random walks to perform")
+    private int NUM_WALK = 2000;
+
+    @CommandLine.Option(names = {"-s", "--steps"}, description = "Maximum number of steps in a walk")
+    private int LENGTH_WALK = 300;
+
+    @CommandLine.Option(names = {"-e", "--extending-period"}, description = "Extending period for the length of walks")
+    private int EXTENDING_PERIOD = 300;
+    
+    @CommandLine.Option(names = {"-r", "--extending-rate"}, description = "Extending rate for the length of walks")
+    private double EXTENDING_RATE = 1.5;
+
+    //private int MAX_STEPS = 7;
 
     public Plan mrw(Problem problem) throws ProblemNotSupportedException {
-
         final State init = new State(problem.getInitialState());
         final MonteCarloNode rootNode = new MonteCarloNode(init);
         Plan plan = null;
+        int currentLengthWalk = LENGTH_WALK;
 
-        for (int i = 0; i < maxIterations; i++) {
-
-            // 1. Selection: Navigate to a promising leaf node.
+        for (int i = 0; i < NUM_WALK; i++) {
             MonteCarloNode nodeToExplore = selectPromisingNode(rootNode);
-
-            // 2. Expansion: Expand the node if it's not a terminal node.
+            
             if (!nodeToExplore.isTerminal() && !nodeToExplore.getState().satisfy(problem.getGoal())) {
                 expandNode(nodeToExplore, problem);
             } else {
-                // if we found a solution, extract the plan and break
                 System.out.println("Solution found after " + i + " iterations.");
                 plan = extractPlan(nodeToExplore, problem);
                 break;
             }
-    
-            // 3. Simulation: Run a random playout from the newly expanded node.
-            int simulationResult = simulateRandomPlayout(nodeToExplore, problem, maxDepth);
 
-            // 4. Backpropagation: Backpropagate the result up the tree.
+            int simulationResult = simulateRandomPlayout(nodeToExplore, problem, currentLengthWalk);
             backpropagate(nodeToExplore, simulationResult);
-
+            
+            
+            if (i % EXTENDING_PERIOD == 0 && i != 0) {
+                currentLengthWalk = (int) (currentLengthWalk * EXTENDING_RATE);
+            }
         }
         return plan;
     }
+
 
     // Selection step: Traverse the tree using UCT to find a promising node.
     private MonteCarloNode selectPromisingNode(MonteCarloNode rootNode) {
@@ -102,8 +119,8 @@ public class MonteCarloPlanner extends AbstractPlanner {
         int depth = 0;
 
         Random random = new Random();
+        List<Action> actions = new ArrayList<>();
         while (!currentState.satisfy(problem.getGoal()) && depth < maxDepth) {
-            List<Action> actions = new ArrayList<>();
 
             for (Action action : problem.getActions()) {
                 if (action.isApplicable(currentState)) {
