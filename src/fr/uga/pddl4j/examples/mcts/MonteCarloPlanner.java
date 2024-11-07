@@ -31,10 +31,10 @@ public class MonteCarloPlanner extends AbstractPlanner {
     private static final Logger LOGGER = LogManager.getLogger(MonteCarloPlanner.class.getName());
 
     @CommandLine.Option(names = {"-i", "--iterations"}, description = "Maximum number of iterations")
-    private int maxIterations = 10000;
+    private int maxIterations = 1000;
 
     @CommandLine.Option(names = {"-d", "--depth"}, description = "Maximum depth for playouts")
-    private int maxDepth = 1000;
+    private int maxDepth = 300;
 
     public Plan mrw(Problem problem) throws ProblemNotSupportedException {
 
