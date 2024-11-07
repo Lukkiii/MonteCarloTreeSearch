@@ -58,7 +58,7 @@ public class MonteCarloNode extends State {
 
     // Calculate the UCT value
     private double uctValue(MonteCarloNode node) {
-        double explorationParameter = Math.sqrt(2);
+        double explorationParameter = Math.sqrt(3);
         double exploitation = (double) node.wins / (node.visits + 1e-6);
         double exploration = Math.sqrt(Math.log(this.visits + 1) / (node.visits + 1e-6));
         return exploitation + explorationParameter * exploration;

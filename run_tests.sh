@@ -34,6 +34,7 @@ for domain in "${DOMAINS[@]}"; do
     
     # Find all problem files (e.g., p001.pddl, p002.pddl) in the same directory as the domain file, and sort them
     find "$dir" -type f -name "p*.pddl" | sort | while read -r problem_file; do
+    
       # Output file to store each individual test result in the domain's results directory
       output_file="$DOMAIN_RESULTS_DIR/$(basename "${problem_file%.pddl}_output.txt")"
       
