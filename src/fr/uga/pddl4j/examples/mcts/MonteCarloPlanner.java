@@ -63,9 +63,11 @@ public class MonteCarloPlanner extends AbstractPlanner {
         int currentLengthWalk = LENGTH_WALK;
 
         for (int i = 0; i < NUM_WALK; i++) {
+            // Selection step
             MonteCarloNode nodeToExplore = selectPromisingNode(rootNode);
             
             if (!nodeToExplore.isTerminal() && !nodeToExplore.getState().satisfy(problem.getGoal())) {
+                // Expand the node
                 expandNode(nodeToExplore, problem);
             } else {
                 System.out.println("Solution found after " + i + " iterations.");
@@ -73,10 +75,13 @@ public class MonteCarloPlanner extends AbstractPlanner {
                 break;
             }
 
+            // Simulate a random playout from the node
             int simulationResult = simulateRandomPlayout(nodeToExplore, problem, currentLengthWalk);
+            
+            // Backpropagate the result
             backpropagate(nodeToExplore, simulationResult);
             
-            
+            // Extend the length of walks periodically
             if (i % EXTENDING_PERIOD == 0 && i != 0) {
                 currentLengthWalk = (int) (currentLengthWalk * EXTENDING_RATE);
             }
@@ -98,11 +103,12 @@ public class MonteCarloPlanner extends AbstractPlanner {
     private void expandNode(MonteCarloNode node, Problem problem) {
         List<Action> actions = problem.getActions();
         State currentState = node.getState();
+        int actionIndex = 0;
 
         for (Action action : actions) {
             if (action.isApplicable(currentState)) {
                 State newState = applyActionAndGetNewState(currentState, action);
-                MonteCarloNode newNode = new MonteCarloNode(newState, node, actions.indexOf(action));
+                MonteCarloNode newNode = new MonteCarloNode(newState, node, actionIndex);
                 node.addChild(newNode);
 
                 // Set terminal flag if the new node satisfies the goal
@@ -110,6 +116,7 @@ public class MonteCarloPlanner extends AbstractPlanner {
                     newNode.setTerminal(true);
                 }
             }
+            actionIndex++;
         }
     }
 
@@ -117,26 +124,26 @@ public class MonteCarloPlanner extends AbstractPlanner {
     private int simulateRandomPlayout(MonteCarloNode node, Problem problem, int maxDepth) {
         State currentState = node.getState();
         int depth = 0;
-
         Random random = new Random();
-        List<Action> actions = new ArrayList<>();
+        List<Action> applicableActions = new ArrayList<>();
+
         while (!currentState.satisfy(problem.getGoal()) && depth < maxDepth) {
+            applicableActions.clear();
 
             for (Action action : problem.getActions()) {
                 if (action.isApplicable(currentState)) {
-                    actions.add(action);
+                    applicableActions.add(action);
                 }
             }
-            if (actions.isEmpty()) break;
+            if (applicableActions.isEmpty()) break;
 
-            Action action = actions.get(random.nextInt(actions.size()));
-            
-            // System.out.println("Depth: " + depth + ", Action: " + action + ", Current State: " + currentState);
+            Action action = applicableActions.get(random.nextInt(applicableActions.size()));
+            System.out.println("Action: " + action.getName());
             currentState = applyActionAndGetNewState(currentState, action);
+            System.out.println("State: " + currentState);
             depth++;
         }
 
-        // System.out.println("Final State: " + currentState + ", Goal Satisfied: " + currentState.satisfy(problem.getGoal()));
         // Return result based on whether the goal was achieved
         return currentState.satisfy(problem.getGoal()) ? 1 : 0;
     }
@@ -149,7 +156,6 @@ public class MonteCarloPlanner extends AbstractPlanner {
                 newState.apply(ce.getEffect());
             }
         }
-        // System.out.println("Applying action: " + action + " Resulting state: " + newState);
         return newState;
     }
 
