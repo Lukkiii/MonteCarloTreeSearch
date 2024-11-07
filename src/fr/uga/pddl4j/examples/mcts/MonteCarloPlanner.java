@@ -41,10 +41,10 @@ public class MonteCarloPlanner extends AbstractPlanner {
     private static final Logger LOGGER = LogManager.getLogger(MonteCarloPlanner.class.getName());
 
     @CommandLine.Option(names = {"-i", "--iterations"}, description = "Maximum number of iterations")
-    private int maxIterations = 3000;
+    private int maxIterations = 10000;
 
     @CommandLine.Option(names = {"-d", "--depth"}, description = "Maximum depth for playouts")
-    private int maxDepth = 500;
+    private int maxDepth = 1000;
 
     public Plan mrw(Problem problem) throws ProblemNotSupportedException {
 
@@ -58,9 +58,14 @@ public class MonteCarloPlanner extends AbstractPlanner {
             MonteCarloNode nodeToExplore = selectPromisingNode(rootNode);
     
             // 2. Expansion: Expand the node if it's not a terminal node.
-            if (!nodeToExplore.isTerminal() && !nodeToExplore.satisfy(problem.getGoal())) {
+            if (!nodeToExplore.isTerminal() && !nodeToExplore.getState().satisfy(problem.getGoal())) {
                 expandNode(nodeToExplore, problem);
-            } 
+            } else {
+                // if we found a solution, extract the plan and break
+                System.out.println("Solution found after " + i + " iterations.");
+                plan = extractPlan(nodeToExplore, problem);
+                break;
+            }
     
             // 3. Simulation: Run a random playout from the newly expanded node.
             int simulationResult = simulateRandomPlayout(nodeToExplore, problem, maxDepth);
@@ -68,11 +73,6 @@ public class MonteCarloPlanner extends AbstractPlanner {
             // 4. Backpropagation: Backpropagate the result up the tree.
             backpropagate(nodeToExplore, simulationResult);
 
-            // Check if we have reached a solution
-            if (nodeToExplore.satisfy(problem.getGoal())) {
-                plan = extractPlan(nodeToExplore, problem);
-                break;
-            }
         }
         return plan;
     }
@@ -116,10 +116,12 @@ public class MonteCarloPlanner extends AbstractPlanner {
 
             Action action = actions.get(new Random().nextInt(actions.size()));
             if (action.isApplicable(currentState)) {
+                // System.out.println("Depth: " + depth + ", Action: " + action + ", Current State: " + currentState);
                 currentState = applyActionAndGetNewState(currentState, action);
                 depth++;
             }
         }
+        // System.out.println("Final State: " + currentState + ", Goal Satisfied: " + currentState.satisfy(problem.getGoal()));
         // Return result based on whether the goal was achieved
         return currentState.satisfy(problem.getGoal()) ? 1 : 0;
     }
@@ -132,6 +134,7 @@ public class MonteCarloPlanner extends AbstractPlanner {
                 newState.apply(ce.getEffect());
             }
         }
+        // System.out.println("Applying action: " + action + " Resulting state: " + newState);
         return newState;
     }
 
