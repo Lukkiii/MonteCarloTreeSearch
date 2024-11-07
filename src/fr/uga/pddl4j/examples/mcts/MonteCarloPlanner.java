@@ -11,6 +11,7 @@ import fr.uga.pddl4j.problem.State;
 import fr.uga.pddl4j.problem.operator.Action;
 import fr.uga.pddl4j.problem.operator.ConditionalEffect;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import org.apache.logging.log4j.LogManager;
@@ -100,18 +101,24 @@ public class MonteCarloPlanner extends AbstractPlanner {
         State currentState = node.getState();
         int depth = 0;
 
+        Random random = new Random();
         while (!currentState.satisfy(problem.getGoal()) && depth < maxDepth) {
-            List<Action> actions = problem.getActions();
-            if (actions.isEmpty())
-                break;
+            List<Action> actions = new ArrayList<>();
 
-            Action action = actions.get(new Random().nextInt(actions.size()));
-            if (action.isApplicable(currentState)) {
-                // System.out.println("Depth: " + depth + ", Action: " + action + ", Current State: " + currentState);
-                currentState = applyActionAndGetNewState(currentState, action);
-                depth++;
+            for (Action action : problem.getActions()) {
+                if (action.isApplicable(currentState)) {
+                    actions.add(action);
+                }
             }
+            if (actions.isEmpty()) break;
+
+            Action action = actions.get(random.nextInt(actions.size()));
+            
+            // System.out.println("Depth: " + depth + ", Action: " + action + ", Current State: " + currentState);
+            currentState = applyActionAndGetNewState(currentState, action);
+            depth++;
         }
+
         // System.out.println("Final State: " + currentState + ", Goal Satisfied: " + currentState.satisfy(problem.getGoal()));
         // Return result based on whether the goal was achieved
         return currentState.satisfy(problem.getGoal()) ? 1 : 0;
