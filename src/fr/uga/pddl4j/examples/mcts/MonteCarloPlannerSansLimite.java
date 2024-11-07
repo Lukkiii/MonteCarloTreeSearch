@@ -26,15 +26,15 @@ import picocli.CommandLine;
  */
 @CommandLine.Command(name = "MCTS", version = "MCTS 1.0", description = "Solves a specified planning problem using MCTS with pure random walks.", sortOptions = false, mixinStandardHelpOptions = true, headerHeading = "Usage:%n", synopsisHeading = "%n", descriptionHeading = "%nDescription:%n%n", parameterListHeading = "%nParameters:%n", optionListHeading = "%nOptions:%n")
 
-public class MonteCarloPlanner extends AbstractPlanner {
+public class MonteCarloPlannerSansLimite extends AbstractPlanner {
 
     private static final Logger LOGGER = LogManager.getLogger(MonteCarloPlanner.class.getName());
 
     @CommandLine.Option(names = { "-i", "--iterations" }, description = "Maximum number of iterations")
-    private int maxIterations = 3000;
+    private int maxIterations = 1000;
 
     @CommandLine.Option(names = { "-d", "--depth" }, description = "Maximum depth for playouts")
-    private int maxDepth = 500;
+    private int maxDepth = 50000;
 
     public Plan mrw(Problem problem) throws ProblemNotSupportedException {
 
@@ -42,10 +42,11 @@ public class MonteCarloPlanner extends AbstractPlanner {
         final MonteCarloNode rootNode = new MonteCarloNode(init);
         Plan plan = null;
 
-        for (int i = 0; i < maxIterations; i++) {
+        MonteCarloNode nodeToExplore = rootNode;
+        while (!nodeToExplore.satisfy(problem.getGoal())) {
 
             // 1. Selection: Navigate to a promising leaf node.
-            MonteCarloNode nodeToExplore = selectPromisingNode(rootNode);
+            nodeToExplore = selectPromisingNode(rootNode);
 
             // 2. Expansion: Expand the node if it's not a terminal node.
             if (!nodeToExplore.isTerminal() && !nodeToExplore.satisfy(problem.getGoal())) {
@@ -53,7 +54,7 @@ public class MonteCarloPlanner extends AbstractPlanner {
             }
 
             // 3. Simulation: Run a random playout from the newly expanded node.
-            int simulationResult = simulateRandomPlayout(nodeToExplore, problem, maxDepth);
+            int simulationResult = simulateRandomPlayout(nodeToExplore, problem);
 
             // 4. Backpropagation: Backpropagate the result up the tree.
             backpropagate(nodeToExplore, simulationResult);
@@ -96,11 +97,11 @@ public class MonteCarloPlanner extends AbstractPlanner {
     }
 
     // Simulation step: Perform a random playout from the given node.
-    private int simulateRandomPlayout(MonteCarloNode node, Problem problem, int maxDepth) {
+    private int simulateRandomPlayout(MonteCarloNode node, Problem problem) {
         State currentState = node.getState();
         int depth = 0;
 
-        while (!currentState.satisfy(problem.getGoal()) && depth < maxDepth) {
+        while (!currentState.satisfy(problem.getGoal())) {
             List<Action> actions = problem.getActions();
             if (actions.isEmpty())
                 break;
