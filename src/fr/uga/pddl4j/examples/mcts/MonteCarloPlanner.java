@@ -178,20 +178,20 @@ public class MonteCarloPlanner extends AbstractPlanner {
             throw new ProblemNotSupportedException("Problem not supported");
         }
 
-        StateHeuristic h = StateHeuristic.getInstance(this.getH(), problem);
-        
-        // Initialize the root node
-        final State init = new State(problem.getInitialState());
-        final MonteCarloNode rootNode = new MonteCarloNode(init);
+        StateHeuristic h = StateHeuristic.getInstance(getH(), problem);
 
         // Get the goal of the problem.
         final Condition goal = problem.getGoal();
-        // Set the heuristic value of the root node.
-        rootNode.setHValue(h.estimate(init, goal));
+
+        // Initialize the root node
+        final State init = new State(problem.getInitialState());
+        final MonteCarloNode rootNode = new MonteCarloNode(init, null, -1, h.estimate(init, goal));
+
+        
 
         // Get the actions of the problem.
         final List<Action> actions = problem.getActions();
-        MonteCarloNode currentState = rootNode; 
+        MonteCarloNode currentNode = rootNode; 
         double hmin = rootNode.getHValue();
         int numSteps = 0;
 
@@ -199,17 +199,17 @@ public class MonteCarloPlanner extends AbstractPlanner {
         long currentTime = System.currentTimeMillis();
         long endTime = startTime + MAX_SEARCH_TIME * 1000L;
 
-        while (!currentState.satisfy(goal) && (currentTime < endTime)) {
+        while (!currentNode.getState().satisfy(goal) && (currentTime < endTime)) {
 
             if (numSteps >= getMaxSteps()) {
-                currentState = rootNode;
+                currentNode = rootNode;
                 numSteps = 0;
             }
             
-            currentState = simulatePureRandomWalk(currentState, actions, goal, h);
+            currentNode = simulatePureRandomWalk(currentNode, actions, goal, h);
 
-            if (currentState.getHValue() < hmin) {
-                hmin = currentState.getHValue();
+            if (currentNode.getHValue() < hmin) {
+                hmin = currentNode.getHValue();
                 numSteps = 0;
             } else {
                 numSteps++;
@@ -223,7 +223,7 @@ public class MonteCarloPlanner extends AbstractPlanner {
             return null;
         }
 
-        return extractPlan(currentState, problem);
+        return extractPlan(currentNode, problem);
     }
         
 
@@ -236,7 +236,7 @@ public class MonteCarloPlanner extends AbstractPlanner {
         double hmin = Double.POSITIVE_INFINITY;
         Random rand = new Random();
 
-        while (numSteps < getLengthWalk()) {
+        while (numSteps < getNumWalks()) {
             currentNode = node;
             int steps = 0;
             while (!currentNode.getState().satisfy(goal) && steps < getLengthWalk()) {
