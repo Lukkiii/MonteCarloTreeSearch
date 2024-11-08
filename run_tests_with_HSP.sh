@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Base command to run the Java program with Windows-style classpath separator
-JAVA_CMD="java -cp classes:lib/pddl4j-4.0.0.jar fr.uga.pddl4j.planners.statespace.HSP"
+JAVA_CMD="java -cp classes;lib/pddl4j-4.0.0.jar fr.uga.pddl4j.planners.statespace.HSP"
 
 # Root directory containing the test folders
 TEST_DIR="src/test"
@@ -19,7 +19,7 @@ mkdir -p "$RESULTS_DIR"
 CSV_FILE="$RESULTS_DIR/test_results_summary.csv"
 
 # Initialize CSV file with headers
-echo "Domain,Subfolder,Problem,Steps,Total Time (seconds)" > "$CSV_FILE"
+echo "Domain;Subfolder;Problem;Steps;Total Time (seconds)" > "$CSV_FILE"
 
 # Iterate over each domain
 for domain in "${DOMAINS[@]}"; do
@@ -59,7 +59,7 @@ for domain in "${DOMAINS[@]}"; do
       echo "$(basename "$problem_file") | $steps | $total_time" >> "$SUMMARY_FILE"
       
       # Append the result to the CSV file with domain, subfolder, problem name, steps, and total time
-      echo "$domain,$subfolder,$(basename "$problem_file"),$steps,$total_time" >> "$CSV_FILE"
+      echo "$domain;$subfolder;$(basename "$problem_file");$steps;$total_time" >> "$CSV_FILE"
     done
   done
 done
