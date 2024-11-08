@@ -1,5 +1,6 @@
 # MonteCarloTreeSearch
 
+# Dossier Figures pour les figures de chaque benchmark realisé
 At first, run 
 ```
 javac -d classes -cp lib/pddl4j-4.0.0.jar src/fr/uga/pddl4j/examples/mcts/MonteCarloNode.java src/fr/uga/pddl4j/examples/mcts/MonteCarloPlanner.java
