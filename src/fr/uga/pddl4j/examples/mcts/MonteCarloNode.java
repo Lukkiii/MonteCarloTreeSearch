@@ -6,42 +6,37 @@ import java.util.List;
 import java.util.Comparator;
 
 public class MonteCarloNode extends State {
+    
     private MonteCarloNode parent;
     private List<MonteCarloNode> children;
-    private int visits;
-    private int wins;
-    private boolean terminal;
-    private final int action; // Action that led to this node
+    private double hValue;
+    private int actionIndex;
+    private boolean isTerminal;
 
     // Constructor for the root node
     public MonteCarloNode(State state) {
         super(state);
+        this.parent = null;
         this.children = new ArrayList<>();
-        this.visits = 0;
-        this.wins = 0;
-        this.terminal = false;
-        this.action = -1;
+        this.hValue = Double.POSITIVE_INFINITY;
+        this.isTerminal = false;
     }
 
     // Constructor for the child nodes
-    public MonteCarloNode(State state, MonteCarloNode parent, int action) {
+    public MonteCarloNode(State state, MonteCarloNode parent, int actionIndex, double hValue) {
         super(state);
         this.parent = parent;
-        this.children = new ArrayList<>();
-        this.visits = 0;
-        this.wins = 0;
-        this.terminal = false;
-        this.action = action;
+        this.actionIndex = actionIndex;
+        this.hValue = hValue;
     }
 
-    // check if the node is terminal
+    // Get the heuristic value
+    public double getHValue() {
+        return hValue;
+    }
+
     public boolean isTerminal() {
-        return terminal;
-    }
-
-    // Setter for terminal
-    public void setTerminal(boolean isTerminal) {
-        this.terminal = isTerminal;
+       return isTerminal;
     }
 
     // check if the node is a leaf
@@ -49,42 +44,9 @@ public class MonteCarloNode extends State {
         return children.isEmpty();
     }
 
-    // Select the most promising node
-    public MonteCarloNode selectPromisingNode() {
-        return children.stream()
-                .max(Comparator.comparingDouble(this::uctValue))
-                .orElse(null);
-    }
-
-    // Calculate the UCT value
-    private double uctValue(MonteCarloNode node) {
-        double explorationParameter = Math.sqrt(2);
-        double exploitation = (double) node.wins / (node.visits + 1e-6);
-        double exploration = Math.sqrt(Math.log(this.visits + 1) / (node.visits + 1e-6));
-        return exploitation + explorationParameter * exploration;
-    }
-
     // Add a child node
     public void addChild(MonteCarloNode child) {
         children.add(child);
-    }
-
-    // Add visits and wins
-    public void addVisits() {
-        this.visits++;
-    }
-
-    public void addWins(int result) {
-        this.wins += result;
-    }
-
-    // Getters
-    public int getVisits() {
-        return visits;
-    }
-
-    public int getWins() {
-        return wins;
     }
 
     public State getState() {
@@ -100,6 +62,29 @@ public class MonteCarloNode extends State {
     }
 
     public int getAction() {
-        return action;
+        return actionIndex;
     }
+
+    public void setTerminal(boolean b) {
+        isTerminal = b;
+    }
+
+    public void setHValue(double hMin) {
+        hValue = hMin;
+    }
+
+    // Select the most promising node
+    // public MonteCarloNode selectPromisingNode() {
+    //     return children.stream()
+    //             .max(Comparator.comparingDouble(this::uctValue))
+    //             .orElse(null);
+    // }
+
+    // Calculate the UCT value
+    // private double uctValue(MonteCarloNode node) {
+    //     double explorationParameter = Math.sqrt(2);
+    //     double exploitation = (double) node.wins / (node.visits + 1e-6);
+    //     double exploration = Math.sqrt(Math.log(this.visits + 1) / (node.visits + 1e-6));
+    //     return exploitation + explorationParameter * exploration;
+    // }
 }
